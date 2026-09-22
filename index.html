@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="description"
+    content="EstateIQ - AI-powered property valuation with EMI calculator, neighbourhood scoring and market charts.">
+  <title>EstateIQ – Intelligent Property Valuation</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+</head>
+
+<body>
+  <!-- NAVIGATION -->
+  <nav class="top-nav">
+    <div class="logo">🏡 EstateIQ</div>
+    <div class="nav-items">
+      <span class="nav-btn active" data-page="dashboard">Dashboard</span>
+      <span class="nav-btn" data-page="analytics">Analytics</span>
+      <span class="nav-btn" data-page="reports">Reports</span>
+    </div>
+    <div class="nav-right">
+      <div class="ai-badge"><span class="ai-dot"></span><span class="ai-label">AI Live</span></div>
+    </div>
+  </nav>
+
+  <!-- FIXED BACKGROUND -->
+  <div class="bg-wrap">
+    <div id="bgImg" class="bg-img"></div>
+    <div class="bg-overlay"></div>
+    <div class="bg-glow1"></div>
+    <div class="bg-glow2"></div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div id="dashboardPage" class="page-section">
+    <div class="hero">
+      <div class="hero-badge"><span>📍 <span id="heroCityLabel">Bengaluru</span> Real Estate Market</span></div>
+      <h1>Intelligent Property<br><em>Valuation Oracle</em></h1>
+      <p class="hero-sub">AI price prediction · EMI calculator · Neighbourhood scoring · Market charts</p>
+    </div>
+
+    <div class="prop-banner-wrap">
+      <div class="prop-banner">
+        <div id="propBannerBg" class="prop-banner-bg"></div>
+        <div class="prop-banner-overlay"></div>
+        <div class="prop-banner-content">
+          <div>
+            <div class="banner-small">Property Preview</div>
+            <div class="banner-big" id="bannerType">Apartment</div>
+            <div class="banner-sub" id="bannerDetails">3 BHK · 1,200 sq ft · Semi-Furnished</div>
+          </div>
+          <div style="text-align:right">
+            <div class="banner-small" id="countryLabel">India</div>
+            <div class="banner-big" id="bannerCity" style="font-size:1.4rem">Bengaluru</div>
+            <div class="banner-sub" id="bannerFloor">Floor 4/12 · East facing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid" id="mainGrid">
+      <!-- INPUT PANEL -->
+      <div class="glass" style="padding:1.7rem">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="basic">🏠 Basic</button>
+          <button class="tab-btn" data-tab="location">📍 Location</button>
+          <button class="tab-btn" data-tab="advanced">⚙️ Advanced</button>
+          <button class="tab-btn" data-tab="amenities">✨ Amenities</button>
+        </div>
+
+        <div id="tab-basic" class="tab-content">
+          <div class="form-group">
+            <label class="form-label">📍 Specific Location (Bengaluru)</label>
+            <div class="search-wrap dropdown-enabled">
+              <input type="text" id="locationSearch" placeholder="Search for a location..." autocomplete="off">
+              <div class="dropdown-arrow">▼</div>
+              <div id="locationResults" class="search-results hidden"></div>
+            </div>
+            <div id="popularAreas" class="popular-areas">
+              <span class="popular-label">Popular:</span>
+              <button class="area-chip" data-value="Whitefield">Whitefield</button>
+              <button class="area-chip" data-value="HSR Layout">HSR Layout</button>
+              <button class="area-chip" data-value="Electronic City">ECity</button>
+              <button class="area-chip" data-value="Sarjapur Road">Sarjapur</button>
+              <button class="area-chip" data-value="Hebbal">Hebbal</button>
+            </div>
+            <div id="browseAllBtn" class="browse-all-link">Browse All 235+ Areas →</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.8rem">
+            <div class="form-group"><label class="form-label">🏢 Property Type</label>
+              <div class="sel-wrap"><select id="propertyType"></select></div>
+            </div>
+            <div class="form-group"><label class="form-label">🛋 Furnishing</label>
+              <div class="sel-wrap"><select id="furnishing"></select></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.8rem">
+            <div class="form-group"><label class="form-label">📐 Area Type</label>
+              <div class="sel-wrap"><select id="areaTypeSel">
+                <option>Super built-up Area</option>
+                <option>Built-up Area</option>
+                <option>Plot Area</option>
+                <option>Carpet Area</option>
+              </select></div>
+            </div>
+            <div class="form-group"><label class="form-label">🔑 Availability</label>
+              <div class="sel-wrap"><select id="availabilitySel">
+                <option>Ready To Move</option>
+                <option>Under Construction</option>
+              </select></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">📐 Built-up Area</label><span class="slider-val" id="areaVal">1200 sq ft</span></div>
+            <input type="range" id="area" min="200" max="15000" step="50" value="1200">
+          </div>
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">🛏 Bedrooms (BHK)</label><span class="slider-val" id="bedroomsVal">3 BHK</span></div>
+            <input type="range" id="bedrooms" min="1" max="15" value="3">
+          </div>
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">🚿 Bathrooms</label><span class="slider-val" id="bathroomsVal">2</span></div>
+            <input type="range" id="bathrooms" min="1" max="10" value="2">
+          </div>
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">🌅 Balcony</label><span class="slider-val" id="balconyVal">1</span></div>
+            <input type="range" id="balcony" min="0" max="5" value="1">
+          </div>
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">📅 Property Age</label><span class="slider-val" id="ageVal">5 yrs</span></div>
+            <input type="range" id="age" min="0" max="60" value="5">
+          </div>
+          <div class="form-group"><label class="form-label">🧭 Facing Direction</label>
+            <div class="sel-wrap"><select id="facing"></select></div>
+          </div>
+
+        </div>
+
+        <div id="tab-location" class="tab-content hidden">
+          <div class="form-group">
+            <div class="form-label">🌆 Select City Market</div>
+            <div class="search-wrap dropdown-enabled" id="citySearchWrap">
+              <input type="text" id="citySearch" placeholder="Search for a city..." autocomplete="off">
+              <div class="dropdown-arrow">▼</div>
+              <div id="cityResults" class="search-results hidden"></div>
+            </div>
+          </div>
+          <div class="form-group">
+              <div class="slider-row"><label class="form-label">🏗 Floor Number</label><span class="slider-val" id="floorVal">4</span></div>
+              <input type="range" id="floor" min="0" max="60" value="4">
+          </div>
+          <div class="form-group">
+              <div class="slider-row"><label class="form-label">🏢 Total Floors</label><span class="slider-val" id="totalFloorsVal">12</span></div>
+              <input type="range" id="totalFloors" min="1" max="100" value="12">
+          </div>
+          <div class="form-group">
+              <div class="slider-row"><label class="form-label">🚗 Parking Spaces</label><span class="slider-val" id="parkingVal">1</span></div>
+              <input type="range" id="parking" min="0" max="8" value="1">
+          </div>
+          <div class="form-group">
+            <div class="form-label">📍 Proximity Boosts</div>
+            <div style="display:flex;flex-wrap:wrap;gap:.45rem">
+              <button class="chip active" data-key="nearMetro">🚇 Metro</button>
+              <button class="chip active" data-key="nearSchool">🏫 School</button>
+              <button class="chip" data-key="nearHospital">🏥 Hospital</button>
+              <button class="chip" data-key="nearMall">🛍 Mall</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">📍 Map Preview</div>
+            <div id="inputMap" class="glass-map"></div>
+          </div>
+        </div>
+
+        <div id="tab-advanced" class="tab-content hidden">
+          <div class="form-group"><label class="form-label">⭐ Property Condition</label>
+            <div class="sel-wrap"><select id="condition">
+                <option>Excellent</option>
+                <option selected>Good</option>
+                <option>Average</option>
+                <option>Needs Renovation</option>
+              </select></div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">🎁 Special Features</div>
+            <div style="display:flex;flex-wrap:wrap;gap:.45rem">
+              <button class="chip" data-key="vastu">🔱 Vastu Compliant</button>
+              <button class="chip" data-key="waterfront">🌊 Waterfront View</button>
+              <button class="chip" data-key="cornerPlot">⬛ Corner Plot</button>
+            </div>
+          </div>
+          <div class="glass" style="padding:1rem; margin-top:1rem; border-color:var(--neon-magenta)">
+            <div class="card-title" style="color:var(--neon-magenta); margin-bottom:1rem">🏦 Loan Parameters</div>
+            <div class="form-group">
+              <div class="slider-row"><label class="form-label">💳 Loan %</label><span class="slider-val" id="loanPctVal">80%</span></div>
+              <input type="range" id="loanPct" min="10" max="100" step="5" value="80">
+            </div>
+            <div class="form-group">
+              <div class="slider-row"><label class="form-label">📊 Interest Rate</label><span class="slider-val" id="loanRateVal">8.5% p.a.</span></div>
+              <input type="range" id="loanRate" min="1" max="25" step="0.1" value="8.5">
+            </div>
+            <div class="form-group">
+              <div class="slider-row"><label class="form-label">⏳ Tenure</label><span class="slider-val" id="loanTenureVal">20 yrs</span></div>
+              <input type="range" id="loanTenure" min="1" max="30" value="20">
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-amenities" class="tab-content hidden">
+          <div class="form-label">✨ Select Amenities</div>
+          <div id="amenityGrid" class="amenities-grid"></div>
+          <div style="margin-top:.9rem;padding:.55rem .8rem;background:rgba(34,211,238,.07);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.75rem;color:#a8a29e">Selected</span>
+            <span id="amenityCount" style="font-size:.85rem;font-weight:700;color:var(--neon-cyan)">2/12</span>
+          </div>
+        </div>
+
+        <div style="margin-top:1.4rem">
+          <button class="pred-btn" id="predictBtn">⚡ Generate Full Valuation Report</button>
+          <p class="error-msg hidden" id="errorMsg"></p>
+        </div>
+      </div>
+
+      <!-- RESULTS PANEL -->
+      <div id="resultPanel" class="result-panel hidden">
+        <div class="price-hero">
+          <div id="priceHeroBg" class="bg-img" style="display:block; z-index:-1; opacity:0.4"></div>
+          <div class="price-hero-content">
+            <div class="price-label">Estimated Market Value</div>
+            <div class="price-value" id="priceValue">—</div>
+            <div class="price-sqft" id="priceSqft"></div>
+            <div class="price-range">
+              <div class="range-item"><div class="range-label">Low</div><div class="range-val" id="priceLow">—</div></div>
+              <div class="range-item"><div class="range-label">High</div><div class="range-val" id="priceHigh">—</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="view-tabs">
+          <button class="view-btn active" data-view="overview">📊 Overview</button>
+          <button class="view-btn" data-view="neighborhood">🏘 Area Score</button>
+          <button class="view-btn" data-view="chart">📈 Market</button>
+          <button class="view-btn" data-view="emi">🏦 Loan & EMI</button>
+        </div>
+        <div id="view-overview" class="view-content"></div>
+        <div id="view-neighborhood" class="view-content hidden"></div>
+        <div id="view-chart" class="view-content hidden">
+          <div class="glass" style="padding:1.1rem;margin-bottom:1rem">
+            <div class="section-head">Market Distribution</div>
+            <div style="height: 300px;"><canvas id="heatmapChart"></canvas></div>
+          </div>
+        </div>
+        <div id="view-emi" class="view-content hidden">
+          <div class="glass" style="padding:1.1rem;margin-bottom:1rem">
+            <canvas id="emiPieChart" height="150"></canvas>
+          </div>
+        </div>
+        
+        <div class="glass" style="padding:1.1rem;margin-top:1rem">
+          <div class="card-title" style="margin-bottom:1rem">🌍 Interactive Price Heatmap</div>
+          <div id="resultMap" class="glass-map" style="height: 300px;"></div>
+          <p style="font-size: 0.7rem; color: #a8a29e; margin-top: 0.5rem;">Visualizing market trends and geocoded valuations.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS PAGE -->
+  <div id="analyticsPage" class="page-section hidden" style="padding: 20px 40px; max-width: 1400px; margin: auto;">
+    <div class="hero">
+      <h1>Market <em>Intelligence</em></h1>
+      <p class="hero-sub">Deep dive into real estate trends and city performance</p>
+    </div>
+    <div class="reports-stats" style="margin-bottom: 2rem;">
+      <div class="glass stats-card" style="padding: 1.2rem; text-align: center;">
+        <div class="card-title">Avg Market Price</div>
+        <div id="marketAvgPrice" class="card-value">-</div>
+      </div>
+      <div class="glass stats-card" style="padding: 1.2rem; text-align: center;">
+        <div class="card-title">Total Listings</div>
+        <div id="marketTotalListings" class="card-value">-</div>
+      </div>
+      <div class="glass stats-card" style="padding: 1.2rem; text-align: center;">
+        <div class="card-title">Avg Price/Sqft</div>
+        <div id="marketAvgPPS" class="card-value">-</div>
+      </div>
+    </div>
+
+    <div class="analytics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem;">
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">🏢 Area Type Distribution</div>
+        <div style="height: 300px;"><canvas id="areaTypeChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">🛏 Price vs BHK (Avg)</div>
+        <div style="height: 300px;"><canvas id="bhkPriceChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">📍 Top 10 Most Expensive Locations</div>
+        <div style="height: 300px;"><canvas id="topLocChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">💰 Market Price Segments</div>
+        <div style="height: 300px;"><canvas id="priceSegmentChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">📐 Price vs Size Curve (Data Driven)</div>
+        <div style="height: 300px;"><canvas id="sizePriceChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">🏥 Market Health Index (Ready Move %)</div>
+        <div style="height: 300px;"><canvas id="marketHealthChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">📅 Availability Distribution</div>
+        <div style="height: 300px;"><canvas id="availabilityChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">💎 Top Locations by Price Per Sqft</div>
+        <div style="height: 300px;"><canvas id="topPPSChart"></canvas></div>
+      </div>
+      <div class="glass" style="padding: 1.5rem;">
+        <div class="form-label" style="margin-bottom: 1rem;">📈 Bengaluru Benchmark Price Index</div>
+        <div style="height: 300px;"><canvas id="marketTrendChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTS PAGE -->
+  <div id="reportsPage" class="page-section hidden" style="padding: 20px 40px; max-width: 1400px; margin: auto;">
+    <div class="hero">
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>
+          <h1>Valuation <em>Dashboard</em></h1>
+          <p class="hero-sub">Access your session history and generated certificates</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <button class="pred-btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem;" id="clearHistoryBtn">🗑 Clear History</button>
+          <button class="pred-btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem;" id="exportHistoryBtn">💾 Export CSV</button>
+        </div>
+      </div>
+    </div>
+    <div class="reports-stats">
+      <div class="glass stats-card" style="padding: 1.2rem; text-align: center;">
+        <div class="card-title">Total Valuations</div>
+        <div id="statsTotal" class="card-value">-</div>
+      </div>
+      <div class="glass stats-card" style="padding: 1.2rem; text-align: center;">
+        <div class="card-title">Avg. Session Price</div>
+        <div id="statsAvg" class="card-value">-</div>
+      </div>
+      <div class="glass stats-card" style="padding: 1.2rem; text-align: center;">
+        <div class="card-title">AI Confidence</div>
+        <div id="statsConf" class="card-value">-</div>
+      </div>
+    </div>
+    <h2 class="section-title" style="margin-top: 40px;">📜 Valuation History</h2>
+    <div id="reportsList" class="reports-grid"></div>
+  </div>
+
+  <footer style="margin-top: 50px; text-align: center; padding: 20px;">
+    <p style="font-size: 0.75rem; color: #a8a29e;">EstateIQ v2.0 · AI Valuation Engine · For Informational Purposes Only</p>
+  </footer>
+
+  <!-- AREA BROWSER MODAL -->
+  <div id="areaBrowserModal" class="modal-overlay hidden">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h2 class="modal-title">🔍 Explore All Areas</h2>
+        <button id="closeModal" class="modal-close">×</button>
+      </div>
+      <div class="modal-search">
+        <input type="text" id="modalSearchInput" placeholder="Filter areas..." autocomplete="off">
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- A-Z Grid will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

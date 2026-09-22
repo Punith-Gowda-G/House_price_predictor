@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/predict", "destination": "/api/index" },
+    { "source": "/locations", "destination": "/api/index" },
+    { "source": "/analytics_data", "destination": "/api/index" },
+    { "source": "/heatmap_data", "destination": "/api/index" }
+  ]
+}
